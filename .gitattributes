@@ -1,0 +1,6 @@
+# Keep LF line endings everywhere (the site is served from Linux)
+* text=auto eol=lf
+
+*.png   binary
+*.ico   binary
+*.woff2 binary

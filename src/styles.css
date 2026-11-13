@@ -1,0 +1,99 @@
+@font-face {
+  font-family: 'Unbounded';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  /* Subset to the five letters of the word (see README). */
+  src: url('/fonts/unbounded-600-phost.woff2') format('woff2');
+}
+
+:root {
+  /* Overwritten from the chosen palette at start-up. */
+  --bg0: #0a0314;
+  --bg1: #1a0833;
+  --wax0: #7333ff;
+  --wax1: #1acce6;
+  --p: #ffc95e;
+  --text: #e6ecff;
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: linear-gradient(to top, var(--bg0), var(--bg1));
+  -webkit-tap-highlight-color: transparent;
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#ghost {
+  touch-action: none;
+}
+
+/* The word is drawn into the wax by WebGL. This heading is for screen readers, and is shown as plain
+   text when WebGL is not available. */
+.word {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  margin: 0;
+}
+
+.no-gl .word {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font: 600 min(12vw, 21.6vh) / 1 'Unbounded', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  color: var(--wax1);
+  text-shadow: 0 0 40px color-mix(in srgb, var(--wax0) 60%, transparent);
+}
+
+.no-gl .word .p {
+  color: var(--p);
+}
+
+.tagline {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(5vh + env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+  font: 12px/1.4 ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  letter-spacing: 0.5em;
+  color: color-mix(in srgb, var(--text) 45%, transparent);
+}
+
+@media (max-width: 600px) {
+  .no-gl .word {
+    font-size: min(16vw, 21.6vh);
+  }
+
+  .tagline {
+    letter-spacing: 0.3em;
+  }
+}

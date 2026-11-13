@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- Renders public/favicon.svg to fill the window, for screenshots (see tools/README.md).
+     ?bleed fills the corners too, for the Apple touch icon (iOS rounds the corners itself). -->
+<meta charset="utf-8">
+<title>icon</title>
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  body.bleed { background: #1a0833; }
+  img { display: block; width: 100vw; height: 100vh; }
+  body.bleed img { width: 84vw; height: 84vh; margin: 8vh auto; }
+</style>
+<body>
+<img src="/favicon.svg" alt="">
+<script type="module">
+  if (location.search.includes('bleed')) document.body.className = 'bleed';
+</script>
+</body>
