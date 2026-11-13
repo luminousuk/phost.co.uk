@@ -8,8 +8,8 @@ export function wordSize(width: number, height: number): number {
 
 /**
  * Draws the word, softly blurred, for the shader to turn into wax: red is the whole word and green is
- * "host" only, so the shader can tell the "p" apart and colour it differently. `scale` is device pixels
- * per CSS pixel of the WebGL canvas.
+ * "host" only, so the shader can tell the "p" apart and colour it differently; blue is a wide halo.
+ * `scale` is device pixels per CSS pixel of the WebGL canvas.
  */
 export function drawLetters(width: number, height: number, scale: number): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
@@ -37,6 +37,14 @@ export function drawLetters(width: number, height: number, scale: number): HTMLC
   g.fillText('p', x, y);
   g.fillStyle = '#ffffff';
   g.fillText('host', x + pWidth, y);
+
+  // Blue: a wide, faint halo around the word. It gives the letters the same long-range pull a blob
+  // has, so passing blobs (and the ghost) draw wax bridges to them instead of just overlapping.
+  // 'lighter' adds the blue without touching red and green.
+  g.globalCompositeOperation = 'lighter';
+  g.filter = `blur(${size * 0.22}px)`;
+  g.fillStyle = '#0000ff';
+  g.fillText('phost', x, y);
   return canvas;
 }
 

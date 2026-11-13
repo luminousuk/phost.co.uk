@@ -54,7 +54,7 @@ function drawStill(): void {
 }
 
 function ghostInWax() {
-  return { x: ghost?.x ?? -1e4, y: ghost?.y ?? -1e4, push: ghost ? GHOST.push : 0, glow: ghost ? GHOST.glow : 0 };
+  return { x: ghost?.x ?? -1e4, y: ghost?.y ?? -1e4, pull: ghost ? GHOST.pull : 0, glow: ghost ? GHOST.glow : 0 };
 }
 
 let resizeTimer = 0;

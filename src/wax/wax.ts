@@ -6,7 +6,7 @@ import waxFrag from './shaders/wax.frag';
 
 const UNIFORMS = [
   'uRes', 'uTime', 'uBlobs', 'uCount', 'uGhost', 'uBg0', 'uBg1', 'uWax0', 'uWax1', 'uCore', 'uGlowCol', 'uP',
-  'uSoft', 'uGlow', 'uCoreAmt', 'uHue', 'uGrain', 'uVig', 'uGlass', 'uText', 'uGhostGlow', 'uLetters',
+  'uTextCol', 'uSoft', 'uGlow', 'uCoreAmt', 'uHue', 'uGrain', 'uVig', 'uGlass', 'uText', 'uHalo', 'uGhostGlow', 'uLetters',
 ] as const;
 
 interface Blob {
@@ -15,13 +15,15 @@ interface Blob {
   x: number;
   radius: number;
   lastY: number | null;
+  /** Current vertical stretch, eased towards the target so it never jumps. */
+  stretch: number;
 }
 
 export interface GhostInWax {
   /** Position in CSS px. */
   x: number;
   y: number;
-  push: number;
+  pull: number;
   glow: number;
 }
 
@@ -75,12 +77,14 @@ export function createWax(canvas: HTMLCanvasElement, palette: Palette): Wax | nu
   gl.uniform3fv(u.uCore, rgb(palette.core));
   gl.uniform3fv(u.uGlowCol, rgb(palette.glow));
   gl.uniform3fv(u.uP, rgb(palette.p));
+  gl.uniform3fv(u.uTextCol, rgb(palette.text));
   gl.uniform1f(u.uSoft, WAX.softness);
   gl.uniform1f(u.uGlow, WAX.glow);
   gl.uniform1f(u.uCoreAmt, WAX.core);
   gl.uniform1f(u.uGrain, WAX.grain);
   gl.uniform1f(u.uVig, WAX.vignette);
   gl.uniform1f(u.uGlass, WAX.glass);
+  gl.uniform1f(u.uHalo, WAX.halo);
   gl.uniform1i(u.uCount, WAX.blobs);
 
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
@@ -90,6 +94,7 @@ export function createWax(canvas: HTMLCanvasElement, palette: Palette): Wax | nu
     x: Math.random(),
     radius: rand(0.05, 0.12),
     lastY: null,
+    stretch: 1,
   }));
   const data = new Float32Array(MAX_BLOBS * 4);
 
@@ -99,19 +104,24 @@ export function createWax(canvas: HTMLCanvasElement, palette: Palette): Wax | nu
 
   function place(dt: number): void {
     const aspect = cssWidth / cssHeight;
-    // Viscous wax lingers at the top and bottom and moves quickly in between.
-    const exponent = 0.9 - 0.5 * WAX.viscosity;
     blobs.forEach((b, i) => {
       const s = Math.sin(waxTime * b.rate + b.phase);
-      const y = 0.5 + 0.55 * Math.sign(s) * Math.pow(Math.abs(s), exponent);
+      // Viscous wax lingers at the top and bottom: sin(s * pi/2) flattens the ends of the swing. It has a
+      // finite slope everywhere, so the speed (and the stretch below) changes smoothly.
+      const swing = s + (Math.sin((s * Math.PI) / 2) - s) * WAX.viscosity;
+      const y = 0.5 + 0.55 * swing;
       const x = (b.x * 0.8 + 0.1) * aspect + Math.sin(waxTime * 0.3 + b.phase) * 0.05;
-      const vy = b.lastY === null || dt === 0 ? 0 : (y - b.lastY) / dt;
+      // Stretched while moving. Skip tiny time steps, where the speed estimate is all noise.
+      if (b.lastY !== null && dt > 0.002) {
+        const vy = (y - b.lastY) / dt;
+        const target = 1 + Math.min(1.5, Math.abs(vy) * WAX.viscosity * 10);
+        b.stretch += (target - b.stretch) * Math.min(1, dt * 3);
+      }
       b.lastY = y;
       data[i * 4] = x;
       data[i * 4 + 1] = y;
       data[i * 4 + 2] = b.radius * WAX.size * (1 + 0.15 * Math.sin(waxTime + i));
-      // stretched while moving
-      data[i * 4 + 3] = 1 + Math.min(2.5, Math.abs(vy) * WAX.viscosity * 10);
+      data[i * 4 + 3] = b.stretch;
     });
   }
 
@@ -142,7 +152,7 @@ export function createWax(canvas: HTMLCanvasElement, palette: Palette): Wax | nu
       gl.uniform1f(u.uTime, time);
       gl.uniform1f(u.uHue, hue);
       gl.uniform4fv(u.uBlobs, data);
-      gl.uniform3f(u.uGhost, ghost.x / cssHeight, 1 - ghost.y / cssHeight, ghost.push);
+      gl.uniform3f(u.uGhost, ghost.x / cssHeight, 1 - ghost.y / cssHeight, ghost.pull);
       gl.uniform1f(u.uGhostGlow, ghost.glow);
       gl.uniform1f(u.uText, hasLetters ? 1 : 0);
       gl.drawArrays(gl.TRIANGLES, 0, 3);

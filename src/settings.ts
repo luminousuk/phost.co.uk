@@ -13,6 +13,8 @@ export const WAX = {
   softness: 0.1,
   /** Halo around the wax. */
   glow: 1.2,
+  /** Long-range pull of the word, so blobs and the ghost draw bridges to it. */
+  halo: 0.7,
   /** Bright core inside thick wax. */
   core: 0.35,
   /** Film grain. */
@@ -36,8 +38,8 @@ export const GHOST = {
   keepAway: 130,
   /** 0 to 1: how slowly it follows. */
   laziness: 0.5,
-  /** How strongly it pushes the wax aside. Kept low so the word holds together. */
-  push: 0.3,
+  /** How strongly it pulls nearby wax towards itself. Above about 1.4 it would make wax on its own. */
+  pull: 0.85,
 } as const;
 
 export const TYPE = {
